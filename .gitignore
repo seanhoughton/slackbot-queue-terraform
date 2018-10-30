@@ -1,0 +1,7 @@
+.terraform
+*.tfvars
+*.zip
+*.tfstate
+*.plan
+*.backup
+swarm-bot
