@@ -24,8 +24,8 @@ resource "aws_iam_policy" "event_queue_policy" {
 resource "aws_sqs_queue" "event_queue" {
   name                        = "${var.service_name}-events.fifo"
   fifo_queue                  = true
-  delay_seconds               = 5
-  max_message_size            = 2048
+  delay_seconds               = 1
+  max_message_size            = 65536                             // slack maximum message size is 40,000 bytes
   message_retention_seconds   = 86400
   receive_wait_time_seconds   = 10
   content_based_deduplication = true
