@@ -1,4 +1,9 @@
-*.zip
-*.tfstate
-*.plan
-*.backup
+/build/.terraform
+/build/*.zip
+/build/*.tfstate
+/build/*.plan
+/build/*.tfstate.backup
+/build/terraform.tfvars
+/app/.env
+/app/slack-relay
+/app/cmd/slack-relay/debug

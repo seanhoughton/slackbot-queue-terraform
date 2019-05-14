@@ -1,30 +1,62 @@
-# Slack Bot event queue in AWS
+# A Slack Events API Relay Service
 
-This terraform module creates a set of AWS services that allows you to
-send Slack event API messages to an AWS SQS queue which can be drained
-from within a private network.
+This repo contains all the components required to run a Slack Event API relay inside a private network so
+bots don't need to expose public-facing endpoints.
 
-The API will answer challenge requests.
-
-### Usage
+The pipeline uses an AWS queue to buffer the events so they can be polled.
 
 ```
-module "swarmbot" {
-  source       = "github.com/seanhoughton/slackbot-queue-terraform"
-  service_name = "mybot"
-}
+API Gateway -> Lambda -> SQS <- relay -> bot(s)
 ```
 
-### Inputs
 
-You must define an AWS provider for this module to work.
+## Setting up the AWS side with Terraform
 
-| Variable     | Description                                                   |
-| ------------ | ------------------------------------------------------------- |
-| service_name | This will be the prefix on all AWS resources that get created |
+The `/terraform` folder contains the required terraform configurations and modules to create the pipeline. You must have an AWS account
+and create the `/terraform/terraform.tfvars` file containing your credentials. The `service_name` will be prefixed on every AWS resource.
 
-### Outputs
+```
+access_key = "xxxxxxxxxxxxxxxxxxxx"
+secret_key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+service_name = "my-slack-relay"
+```
 
-| Output    | Description                                        |
-| --------- | -------------------------------------------------- |
-| event_url | The URL you provide to your Slack bot's events API |
+## Configuring your bot
+
+First, pick a secret key to use for your app. This can be any string that is valid as a URL path segment. For example: "mybot1234xyz"
+
+Look at the generated AWS API Gateway to find the public deployment address. Each Slack app should also pick a secret key. This key is used for polling and provides security against unauthorized access of relay messages.
+
+Enter the URL with the following format: `{gateway_url}/{my_app_key}/event`. For example:
+
+```
+https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/prod/mybot1234xyz/event
+```
+
+## Running the relay
+
+Run the relay application from inside your LAN. This becomes the server for listening to events.
+
+| Argument     | Environment Variable | Description                           |
+| ------------ | -------------------- | ------------------------------------- |
+| addr         |                      | What to listen on in `ip:port` format |
+| queue        | `QUEUE`              | The full URL of the AWS event queue   |
+| verification | `VERIFICATION`       | The Slack app's verification token    |
+
+
+```
+slack-relay -port :8080 -queue https://sqs.us-east-1.amazonaws.com/xxxxxxxxxxxx/my-slack-relay.fifo -verification xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+## Subscribing to events
+
+The relay exposes a websocket for each app key at the `/{key}/ws` path. For example:
+
+```
+wscat -c http://localhost:8080/mybot1234xyz/ws
+```
+
+Notes:
+* Multiple subscribers to the same app key will get **duplicate** events. This is a demultiplexer not a queue.
+* Events that arrive when no subscriptions exist for that app key will be discarded.
+
