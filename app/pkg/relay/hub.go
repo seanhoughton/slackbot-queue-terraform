@@ -40,16 +40,20 @@ func (h *Hub) route(event *Event) {
 		return
 	}
 
+	eventsReceived.Inc()
+
 	for client := range h.clients {
 		if client.appKey == event.AppKey {
 			log.Debugf("Sending message for %s", event.AppKey)
 			client.send <- data
 			didSend = true
+			eventsSent.Inc()
 		}
 	}
 
 	if !didSend {
 		log.Warnf("Discarded event for app '%s'", event.AppKey)
+		eventsDropped.Inc()
 	}
 }
 
@@ -59,10 +63,14 @@ func (h *Hub) Run() {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
+			clientsConnected.Inc()
+			clientsConnectedNow.Set(float64(len(h.clients)))
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
+				clientsDisconnected.Inc()
+				clientsConnectedNow.Set(float64(len(h.clients)))
 			}
 		case event := <-h.events:
 			h.route(event)

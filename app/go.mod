@@ -9,6 +9,7 @@ require (
 	github.com/lusis/go-slackbot v0.0.0-20180109053408-401027ccfef5 // indirect
 	github.com/lusis/slack-test v0.0.0-20190426140909-c40012f20018 // indirect
 	github.com/nlopes/slack v0.5.0
+	github.com/prometheus/client_golang v0.9.1
 	github.com/prometheus/common v0.4.0 // indirect
 	github.com/sirupsen/logrus v1.2.0
 	golang.org/x/text v0.3.2 // indirect
