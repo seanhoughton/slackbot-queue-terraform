@@ -1,0 +1,38 @@
+image:
+  name: hashicorp/terraform:light
+  entrypoint:
+    - '/usr/bin/env'
+    - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+
+tf:validate:
+  stage: build
+  script:
+    - cd /builds/shoughton/slack-relay/build
+    - rm -rf .terraform
+    - terraform init
+    - terraform validate
+
+tf:plan:
+  stage: test
+  script:
+    - cd /builds/shoughton/slack-relay/build
+    - rm -rf .terraform
+    - terraform init
+    - terraform plan -out "planfile"
+  dependencies:
+    - tf:validate
+  artifacts:
+    paths:
+      - build/planfile
+      - build/files/enqueue_event.zip
+
+tf:apply:
+  stage: deploy
+  script:
+    - cd /builds/shoughton/slack-relay/build
+    - rm -rf .terraform
+    - terraform init
+    - terraform apply -input=false "planfile"
+  dependencies:
+    - tf:plan
+  when: manual

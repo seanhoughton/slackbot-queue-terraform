@@ -3,7 +3,7 @@ provider "archive" {}
 data "archive_file" "zip" {
   type        = "zip"
   source_file = "${path.module}/enqueue_event.py"
-  output_path = "${path.module}/files/enqueue_event.zip"
+  output_path = "${path.root}/files/enqueue_event.zip"
 }
 
 data "aws_iam_policy_document" "lambda_policy" {

@@ -1,0 +1,14 @@
+app:compile:
+  stage: build
+  image: golang:1.12
+  script:
+    - make build
+
+image:build:
+  stage: build
+  image: docker:dind
+  script:
+    - cd /builds/shoughton/slack-relay/app
+    #- docker login docker.ct.activision.com -u ${REG_USERNAME} -p ${REG_PASSWORD}
+    - docker build -t docker.ct.activision.com/slack/slack-relay:latest .
+    #- docker push docker.ct.activision.com/slack/slack-relay:latest
